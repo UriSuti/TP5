@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini Pokédex</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="card">
+        <p class="eyebrow">TP 5</p>
+        <h1>Mini Pokédex</h1>
+        <p class="intro">
+          Buscá un Pokémon por nombre y consultá sus datos principales.
+        </p>
+
+        <form id="search-form" class="search-form" novalidate>
+          <label for="pokemon-input" class="label">Nombre del Pokémon</label>
+          <div class="search-row">
+            <input
+              id="pokemon-input"
+              name="pokemon"
+              type="text"
+              placeholder="Ej: pikachu"
+              autocomplete="off"
+            />
+            <button type="submit">Buscar</button>
+          </div>
+        </form>
+
+        <div id="status" class="status" aria-live="polite"></div>
+        <section id="result" class="result" aria-live="polite"></section>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
