@@ -1,110 +1,81 @@
-const form = document.getElementById("search-form");
-const input = document.getElementById("pokemon-input");
-const statusElement = document.getElementById("status");
-const resultElement = document.getElementById("result");
+let formulario = document.getElementById("search-form");
+let inputNombre = document.getElementById("pokemon-input");
+let divStatus = document.getElementById("status");
+let divResultado = document.getElementById("result");
 
-function setStatus(message, type = "") {
-  statusElement.textContent = message;
-  statusElement.className = `status ${type}`.trim();
-}
+formulario.addEventListener("submit", async function (evento) {
+  evento.preventDefault();
 
-function clearResult() {
-  resultElement.innerHTML = "";
-}
+  let nombre = inputNombre.value.trim().toLowerCase();
 
-function normalizePokemonName(value) {
-  return value.trim().toLowerCase();
-}
+  divResultado.innerHTML = "";
+  divStatus.textContent = "";
+  divStatus.className = "status";
 
-function validatePokemonName(name) {
-  if (!name) {
-    throw new Error("Ingresá el nombre de un Pokémon.");
+  if (nombre === "") {
+    divStatus.textContent = "Ingresá el nombre de un Pokémon.";
+    divStatus.className = "status error";
+    return;
   }
-}
 
-function formatTypes(types) {
-  return types.map((item) => item.type.name).join(", ");
-}
-
-function formatMeasure(value) {
-  return (value / 10).toFixed(1);
-}
-
-function getPokemonImage(sprites) {
-  return (
-    sprites.other?.["official-artwork"]?.front_default ||
-    sprites.front_default ||
-    ""
-  );
-}
-
-function renderPokemon(pokemon) {
-  const image = getPokemonImage(pokemon.sprites);
-
-  resultElement.innerHTML = `
-    <article class="pokemon-card">
-      ${
-        image
-          ? `<img class="pokemon-image" src="${image}" alt="${pokemon.name}" />`
-          : ""
-      }
-      <h2 class="pokemon-name">${pokemon.name}</h2>
-      <ul class="info-list">
-        <li class="info-item">
-          <span class="info-label">Tipo(s)</span>
-          <span>${formatTypes(pokemon.types)}</span>
-        </li>
-        <li class="info-item">
-          <span class="info-label">Peso</span>
-          <span>${formatMeasure(pokemon.weight)} kg</span>
-        </li>
-        <li class="info-item">
-          <span class="info-label">Altura</span>
-          <span>${formatMeasure(pokemon.height)} m</span>
-        </li>
-      </ul>
-    </article>
-  `;
-}
-
-async function fetchPokemon(name) {
-  let response;
+  divStatus.textContent = "Buscando...";
+  divStatus.className = "status loading";
 
   try {
-    response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
+    let respuesta = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`);
+
+    if (respuesta.status === 404) {
+      divStatus.textContent = "No se encontró ningún Pokémon con ese nombre.";
+      divStatus.className = "status error";
+      return;
+    }
+
+    if (!respuesta.ok) {
+      throw new Error("Error al obtener los datos");
+    }
+
+    let datos = await respuesta.json();
+    console.log(datos); // para ver qué trae la api
+
+    let imagen = datos.sprites.other["official-artwork"].front_default;
+    if (!imagen) {
+      imagen = datos.sprites.front_default;
+    }
+
+    let tipos = datos.types
+      .map(function (t) {
+        return t.type.name;
+      })
+      .join(", ");
+    let peso = (datos.weight / 10).toFixed(1);
+    let altura = (datos.height / 10).toFixed(1);
+
+    divStatus.textContent = "";
+
+    divResultado.innerHTML = `
+      <article class="pokemon-card">
+        ${imagen ? `<img class="pokemon-image" src="${imagen}" alt="${datos.name}" />` : ""}
+        <h2 class="pokemon-name">${datos.name}</h2>
+        <ul class="info-list">
+          <li class="info-item">
+            <span class="info-label">Tipo(s)</span>
+            <span>${tipos}</span>
+          </li>
+          <li class="info-item">
+            <span class="info-label">Peso</span>
+            <span>${peso} kg</span>
+          </li>
+          <li class="info-item">
+            <span class="info-label">Altura</span>
+            <span>${altura} m</span>
+          </li>
+        </ul>
+      </article>
+    `;
   } catch (error) {
-    throw new Error("No se pudo conectar con la PokéAPI. Intentá nuevamente.");
+    console.log(error);
+    divStatus.textContent =
+      "No se pudo conectar con la API. Revisá la conexión e intentá de nuevo.";
+    divStatus.className = "status error";
   }
-
-  if (response.status === 404) {
-    throw new Error("No se encontró ningún Pokémon con ese nombre.");
-  }
-
-  if (!response.ok) {
-    throw new Error("Ocurrió un error al consultar la información del Pokémon.");
-  }
-
-  return response.json();
-}
-
-async function handleSearch(event) {
-  event.preventDefault();
-
-  const pokemonName = normalizePokemonName(input.value);
-
-  clearResult();
-
-  try {
-    validatePokemonName(pokemonName);
-    setStatus("Buscando Pokémon...", "loading");
-
-    const pokemon = await fetchPokemon(pokemonName);
-
-    setStatus("");
-    renderPokemon(pokemon);
-  } catch (error) {
-    setStatus(error.message || "Ocurrió un error inesperado.", "error");
-  }
-}
-
-form.addEventListener("submit", handleSearch);
+});
