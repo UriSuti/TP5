@@ -150,7 +150,6 @@ button:hover {
   font-weight: bold;
 }
 
-/* para mobile */
 @media (max-width: 480px) {
   .search-row {
     flex-direction: column;
